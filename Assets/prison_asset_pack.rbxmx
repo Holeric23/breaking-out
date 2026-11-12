@@ -2021,6 +2021,65 @@
               <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
             </Properties>
           </Item>
+          <Item class="Part" referent="RBX64D253B7FD8345DBBABE17F2B9728DFF"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>5.625</X><Y>3.125</Y><Z>0</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBX8ACE13652A5C4772A5A0CC53B3194A41"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBXDD65F4EE8834475DA559096C2E86E42A"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBX3BE10353EDC64713B89B34AA36FA9081"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625</double></Properties></Item><Item class="BoolValue" referent="RBXE123D70180704A81A6D20E165BD80D4A"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBX87EBCFDE514B47F1975C23916272FA43"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
         </Item>
       </Item>
       <Item class="Model" referent="RBX13FC3152DD934C02AB65BA02CBFB4935">
@@ -4087,6 +4146,65 @@
                 <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
               </Properties>
             </Item>
+            <Item class="Part" referent="RBX09441683ED7B4B0F92AC50467AAC75B8"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>14.625</X><Y>3.125</Y><Z>0</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBX53B2EAD45B934A69882D8FFB4F56EB59"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBX615FAB8D5C9243FB8409E78A86CA5224"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBXF0C1DF92D59A42BC843CD65A364FFC7F"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625</double></Properties></Item><Item class="BoolValue" referent="RBXFC2A91429D4542508F6AF6A3C8F93715"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBXD0A8CCA4627D476398FA8A47EE576598"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
           </Item>
       </Item>
       <Item class="Model" referent="RBX01279994E13F4DAAACC440BCFFD3049F">
@@ -6802,6 +6920,65 @@
               <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
             </Properties>
           </Item>
+          <Item class="Part" referent="RBXA4144D0EB6804208A65689FD5A8855D2"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>23.6250002</X><Y>3.125</Y><Z>0</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBX0AB1C432287449508AC34D68C5B0B2C5"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBX6F4B1A79E9254BC297B23DD1B6CF0030"><Properties><string name="Name">TravelDistance</string><double name="Value">3.200000206</double></Properties></Item><Item class="NumberValue" referent="RBX62F516E6264A4477B29607CE65615F7B"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625000104</double></Properties></Item><Item class="BoolValue" referent="RBXF439B5D5C4A34E159BB4610AC138CCC9"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBX9179EDF47B284E24BDD06DAC854BACA5"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
         </Item>
       </Item>
       <Item class="Model" referent="RBXB197F1CCA6164B72A81A29FF16C44447">
@@ -8768,6 +8945,65 @@
               <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
             </Properties>
           </Item>
+          <Item class="Part" referent="RBX6D1801587CC9490E8B208429D1B392AF"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>32.6250003</X><Y>3.125</Y><Z>0</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBXBD37E90B46DD4533A36CA1D43654C6B1"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBX4E71DEB3EA4A4EEDAC230FA5E31B1189"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBX1DD4C369B26745F6A3DD0B89E5DB9E82"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625</double></Properties></Item><Item class="BoolValue" referent="RBX5DDB8CE3FA9B4D79A111679DA96BFA65"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBX900737562BFA416CB48339713006475D"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
         </Item>
       </Item>
       <Item class="Model" referent="RBX3117697079D942E7BD9678281B203F0A">
@@ -10534,6 +10770,65 @@
                 <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
               </Properties>
             </Item>
+            <Item class="Part" referent="RBX04B42079FE1C4CE4801E6963B182454D"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>41.6250003</X><Y>3.125</Y><Z>0</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBXE24052DA0A914196B46DDE50AE4B1166"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBXBB1C2E917F3F4D40AD3F68CB3E569802"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBX96F893CAE20D4BF1B96DBAC4BDA5BF45"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625</double></Properties></Item><Item class="BoolValue" referent="RBXBA7C6F2D4AC44248B2201EAAD949FE95"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBX38A51F99F5B24C68BDEEE60026EC6D5F"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
           </Item>
       </Item>
       <Item class="Model" referent="RBX5C89175EE8574F2885635968A9A21492">
@@ -12300,6 +12595,65 @@
               <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
             </Properties>
           </Item>
+          <Item class="Part" referent="RBXB4D20FBB72594722ADF4AEA7BBB58119"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>50.6250003</X><Y>3.125</Y><Z>0</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBXD2F0FECC58284EF3AEB1BE1C0B15F438"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBXE4C4C92030E04653967E5C2DFC771296"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBX508270ABD9CD4BEE8613CE6B55A861EF"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625</double></Properties></Item><Item class="BoolValue" referent="RBXEFDC28BC8451419C995BCD9E235D3BDD"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBXB3566FD2A6DB4362AA4755927F726368"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
         </Item>
       </Item>
       <Item class="Model" referent="RBX6F3923B3809741478D5431BDA5791A31">
@@ -14066,6 +14420,65 @@
                 <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
               </Properties>
             </Item>
+            <Item class="Part" referent="RBX0B3227773B584F3D9DCBE65FCE3589ED"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>59.6250003</X><Y>3.125</Y><Z>0</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBX99F17BD4FF634B138BABCE7E6940A528"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBXF7F76C691AC64157893EA1868731C2B0"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBXA5FEAC0A16264883B086E20E1CD7DF35"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625</double></Properties></Item><Item class="BoolValue" referent="RBXD6D97B8CD66C4FCAA9E4CA483C272408"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBX2B5ED686A9414245A1D2C0086EFA09F0"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
           </Item>
       </Item>
       <Item class="Model" referent="RBXF1D12049B41A43659A30F588B4C2989A">
@@ -15832,6 +16245,65 @@
                 <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
               </Properties>
             </Item>
+            <Item class="Part" referent="RBX77DEA38CCEEE4DA9AB46DA8A18213638"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>68.6250003</X><Y>3.125</Y><Z>0</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBX7757BF17B48C4866B41D7F3981FE272A"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBX45682E0CE5384C758C40C082090F31F1"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBX89589A364AFB4A6987D81401C0089053"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625</double></Properties></Item><Item class="BoolValue" referent="RBX30BC71BE6DFD4ED9B4FF4117B9C13EB8"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBX622A9E4499D3435D813CDF8359464A56"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
           </Item>
       </Item>
       <Item class="Model" referent="RBXF1E1C2361304444199A4144363D1B250">
@@ -17998,6 +18470,65 @@
               <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
             </Properties>
           </Item>
+          <Item class="Part" referent="RBX73B96D0C57B34052A77EFD818A56EB09"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>77.6250003</X><Y>3.125</Y><Z>0</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBX5E163799D1104BD2AC9DD1A02EBF262A"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBXFE2ED41AA6E44846A1098F41A6F1244D"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBXE314B7877BFB4E519184D34A93D9740E"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625</double></Properties></Item><Item class="BoolValue" referent="RBXEDB206C6928A4AEC82A35AA70D1C7135"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBX9DCB8C50686541C9BE4DF82786351B54"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
         </Item>
       </Item>
       <Item class="Model" referent="RBXA3EA07858CF94F389EC48B5552594ADC">
@@ -20013,6 +20544,65 @@
               <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
             </Properties>
           </Item>
+          <Item class="Part" referent="RBX059031C59E634C2E93743BE5936BEB84"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>86.6250003</X><Y>3.125</Y><Z>0</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBXD79C9E2D1D384A24A607A03E4713476B"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBX7807FB4E3F43442BAAE5D092EF8A83D4"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBXB2C310A7629E43D895CECEE213063722"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625</double></Properties></Item><Item class="BoolValue" referent="RBX8EF047C375D04CE5B7F88B93ED5A8ECE"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBX6AE74EA2057047A2B1750E5A45C1A2D1"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
         </Item>
       </Item>
       <Item class="Model" referent="RBX7205A1AFD2ED4C15A74D6205A85A8E2E">
@@ -23479,6 +24069,65 @@
                 <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
               </Properties>
             </Item>
+            <Item class="Part" referent="RBX5076D2F47B0243C69A744FA3865D09EB"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>95.6249927</X><Y>3.125</Y><Z>0</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBX069F845DE06B46AB8BE6C06F4F3324B0"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBX5ABB1A8DA062412A889FF1D9CA422EBB"><Properties><string name="Name">TravelDistance</string><double name="Value">3.19999392</double></Properties></Item><Item class="NumberValue" referent="RBXC3CAB4C5BE34452686C89E1440F7D09A"><Properties><string name="Name">CenterOffset</string><double name="Value">-0.375</double></Properties></Item><Item class="BoolValue" referent="RBXCB8E488506C54F5AA7C35AA479BEADE8"><Properties><string name="Name">DoubleDoor</string><bool name="Value">true</bool></Properties></Item></Item>
+<Item class="Script" referent="RBXBB33CD0B623749A9BDE9629A21D89507"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
           </Item>
       </Item>
       <Item class="Model" referent="RBXF62AEA66CB8543A186C770947D249FB9">
@@ -26594,6 +27243,65 @@
               <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
             </Properties>
           </Item>
+          <Item class="Part" referent="RBXDDB768EFA02B48B5BEFE345C84BA9677"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>108.419985</X><Y>3.17</Y><Z>-0.62</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBXD1A587CABE2F4240BCB1C6A080D8D92F"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBX94AB0B13FC9F4864A478037D5151FC97"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBXAFF278123BD045DB944DD4316C92B99D"><Properties><string name="Name">CenterOffset</string><double name="Value">1.42</double></Properties></Item><Item class="BoolValue" referent="RBXBBE0FD5E373C448A9CC1FCF7A7A00A49"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBX6E30E4D826E54A73B0790DA2C9160D59"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
         </Item>
       </Item>
       <Item class="Model" referent="RBXE5A4E90D66B84BD7A6CF9F79B6A3618C">
@@ -31309,6 +32017,65 @@
               <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
             </Properties>
           </Item>
+          <Item class="Part" referent="RBX57EAF60C74684E5080AD1803F24C65B1"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>117.179985</X><Y>3.9</Y><Z>-0.65</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBX2DBFBD2002DD42B381FA57027E1CDEA8"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBX9FF755611356418C8347AE33340BA506"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBX23F61ABB3E4A4016BA94053463F0A83B"><Properties><string name="Name">CenterOffset</string><double name="Value">1.18</double></Properties></Item><Item class="BoolValue" referent="RBX9F078F3E5E514F99B1C9473433678EDB"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBX4343373D5E34423F89C07FEEDA7D65C6"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
         </Item>
       </Item>
       <Item class="Model" referent="RBX58817D79574248DAB6E1CD4CC895DD22">
@@ -36024,6 +36791,65 @@
               <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
             </Properties>
           </Item>
+          <Item class="Part" referent="RBX7C3C1D225E3644D183DED0AB0B2F685C"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>126.379985</X><Y>3.05</Y><Z>-0.62</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBX9DFB7D8BC89046F58B59BA4F920CEFAD"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBX74525B6186394A8280CAF9682E6D5C24"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBX6486AFD9BC1B44898D6C9A2B9EE1A444"><Properties><string name="Name">CenterOffset</string><double name="Value">1.38</double></Properties></Item><Item class="BoolValue" referent="RBXF16EA16E76744187A4B121D00FC3C98C"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBXDE12AF86F23E4F12A968665DF6A402DC"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
         </Item>
       </Item>
     </Item>
@@ -41682,6 +42508,65 @@
               <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
             </Properties>
           </Item>
+          <Item class="Part" referent="RBXED948ED6FAA44F499216DC8E193B701E"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>5.625</X><Y>3.125</Y><Z>-14</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBX5D99374E8CD040E187C5A8EAD81741C2"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBX1E339A01EBF0437E8735F1519CBE4581"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBX8D85FFBF42B442019491E22880F67ABD"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625</double></Properties></Item><Item class="BoolValue" referent="RBXA8664CFAEDF24FAAB74356A971FBC693"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBX3CB4E1FBF32B401193B475EE809CD9CA"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
         </Item>
       <Item class="Model" referent="RBXBA5B17AE5559498FBD25BD3B4CA26DF1">
           <Properties>
@@ -43138,6 +44023,65 @@
                 <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
               </Properties>
             </Item>
+            <Item class="Part" referent="RBX510CA0EC7AEC44F685BF3E2D40F9C2A0"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>14.625</X><Y>3.125</Y><Z>-14</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBX790D704604AB48A889C0503F20710FB6"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBXEF5A77E14F674452ACABE9ED8F4FF690"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBXD906CFA0D854401187DB08BD720D521A"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625</double></Properties></Item><Item class="BoolValue" referent="RBX8585D58A99134D729796054FF65A47D2"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBXADA661D7EA5A4ED2BCB262E832216E26"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
           </Item>
       <Item class="Model" referent="RBXAF5230640AB148A39A2CBCF2AA2E2EDC">
           <Properties>
@@ -45243,6 +46187,65 @@
               <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
             </Properties>
           </Item>
+          <Item class="Part" referent="RBX2D72D94E80C74D4FB4D09FB009748380"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>23.6250002</X><Y>3.125</Y><Z>-14</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBXE32B472BF62441158FBA2AF0D35A43FF"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBX6288D4EE4FAA47A1B5ADA286AC0B07AF"><Properties><string name="Name">TravelDistance</string><double name="Value">3.200000206</double></Properties></Item><Item class="NumberValue" referent="RBXE976623F60D349E4BFF4049A4A2972CC"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625000104</double></Properties></Item><Item class="BoolValue" referent="RBX427F1AA2DA0F4CFBB9D6FA073888C2D6"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBX00846DA1842C41B7B5462F87D6D2BC88"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
         </Item>
       <Item class="Model" referent="RBX874DF2A907814A2C8F6208D45F162A5F">
           <Properties>
@@ -46599,6 +47602,65 @@
               <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
             </Properties>
           </Item>
+          <Item class="Part" referent="RBXE0A22DB5C7D345A0B7A0FAD0FBE8C91F"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>32.6250003</X><Y>3.125</Y><Z>-14</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBXB253CC1E06D24BE7AA0FB94F574B83D0"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBXFF8D914B2CAF4648A1F49BA9B5AEAA9F"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBXA4EB78A82945461583E537EAC6BD5684"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625</double></Properties></Item><Item class="BoolValue" referent="RBX4B1B58FB6B8145D694323C7969A47F7C"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBX1C67AE48C5EE49C79CFE7A1AF8C426D2"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
         </Item>
       <Item class="Model" referent="RBX765D6A419C9F4943B835B3792DECC7F5">
           <Properties>
@@ -47755,6 +48817,65 @@
                 <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
               </Properties>
             </Item>
+            <Item class="Part" referent="RBX2650908EAFE44B528EA2802305B8F0A0"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>41.6250003</X><Y>3.125</Y><Z>-14</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBXD18E2228BCC3409A8B29764B58D65035"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBX1F2065BF31314186BD3D476566145B14"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBX723FA4F1D98845D098B0249C5AF34101"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625</double></Properties></Item><Item class="BoolValue" referent="RBXDE8E690FF6894A808698443A31C790BF"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBX7E3A3CB15AAD423DA0B58094B9F07677"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
           </Item>
       <Item class="Model" referent="RBX57283B6763F74784B630D3420E06750A">
           <Properties>
@@ -48911,6 +50032,65 @@
               <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
             </Properties>
           </Item>
+          <Item class="Part" referent="RBX031CB0DE276B4A14AF66701FB8698827"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>50.6250003</X><Y>3.125</Y><Z>-14</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBX1244BDD23248467E86EDC8064898605D"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBX2B926AF107724D0C8E4EAB9FA42DDCF4"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBX6D562014F9C2450293942EAAC932B9EE"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625</double></Properties></Item><Item class="BoolValue" referent="RBX7B734149809247C794E63E3BB9EED01C"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBX77C186FE44A64F5599749DE436B085C6"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
         </Item>
       <Item class="Model" referent="RBXA026863A5FFD448DB01CEA02D347D889">
           <Properties>
@@ -50067,6 +51247,65 @@
                 <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
               </Properties>
             </Item>
+            <Item class="Part" referent="RBX36E3CDAF9830444F881106B61102E6BB"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>59.6250003</X><Y>3.125</Y><Z>-14</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBXCE90B1DA382C460383AAD44828D3E97D"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBX856BEAB5FDD34C199ED23F2BBC3FB68A"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBXFCBA07026F1F437B9AC4A3B0AB08CFC9"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625</double></Properties></Item><Item class="BoolValue" referent="RBXADCB1316E35040CB971B045472EBB51F"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBX23D2C7646BB640C4B902F4D88E9399AD"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
           </Item>
       <Item class="Model" referent="RBX45CF233E140E461E9A839A28F9BE1BDD">
           <Properties>
@@ -51223,6 +52462,65 @@
                 <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
               </Properties>
             </Item>
+            <Item class="Part" referent="RBXFF55979EADCD4715B93AA3BBC5876102"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>68.6250003</X><Y>3.125</Y><Z>-14</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBX89419892AA7F4E78A345807859A561F8"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBXD9D7F4123D5F481A95E25E684D511893"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBXA5B4F3A3DFD544F183FFDC8E71350DAB"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625</double></Properties></Item><Item class="BoolValue" referent="RBX7ED42689863C4137881889CE5674754B"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBXA6779473D59043C6BF283471761708FC"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
           </Item>
       <Item class="Model" referent="RBX3EF9B574735F4CAD89A2F468498FF027">
           <Properties>
@@ -52779,6 +54077,65 @@
               <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
             </Properties>
           </Item>
+          <Item class="Part" referent="RBX899EF2DD01064003AE86A33011FB6F4D"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>77.6250003</X><Y>3.125</Y><Z>-14</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBX1F9CD99122834CD09C27099B0C7EE6A9"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBXED707BA8D703422CB760BE1F61A5AE13"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBX79345542B4904A0980095E7307E4D3DB"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625</double></Properties></Item><Item class="BoolValue" referent="RBXDFFEF01F1C8244768E8B18BBD50B2FAB"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBXE5275CEB060F457985F9D11ACA427069"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
         </Item>
       <Item class="Model" referent="RBXBE8F08BB55EE4105A29BCF6CBC0C865C">
           <Properties>
@@ -54184,6 +55541,65 @@
               <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
             </Properties>
           </Item>
+          <Item class="Part" referent="RBXFA79017E797B4848914F3365E7EB7428"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>86.6250003</X><Y>3.125</Y><Z>-14</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBX09D6500490244F47872ED3295F8F029D"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBX48A3D802061C4876A9C1168FDD8EE342"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBX56F7E51BB411423194B772AE5C5674C2"><Properties><string name="Name">CenterOffset</string><double name="Value">1.625</double></Properties></Item><Item class="BoolValue" referent="RBX738E6A29494D44F48585542D3CB0A573"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBX919F3A80EE7B474B847C6B183AE3A289"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
         </Item>
       <Item class="Model" referent="RBX37E6FE1CC3AC4A2E9020360DA171BC6E">
           <Properties>
@@ -57040,6 +58456,65 @@
                 <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
               </Properties>
             </Item>
+            <Item class="Part" referent="RBX14185D5AF75A4E1F9165620EF9BA7320"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>95.6249927</X><Y>3.125</Y><Z>-14</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBX0CC352FA7CC74C94A36AD0E1DD57B402"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBX962C150530C54D338EBA7BC87E7D33BA"><Properties><string name="Name">TravelDistance</string><double name="Value">3.19999392</double></Properties></Item><Item class="NumberValue" referent="RBXFAB49899708D4FDDB1E2A35A3C253BD5"><Properties><string name="Name">CenterOffset</string><double name="Value">-0.375</double></Properties></Item><Item class="BoolValue" referent="RBXFB04CEBC90444E4696CCA22FC7D4537C"><Properties><string name="Name">DoubleDoor</string><bool name="Value">true</bool></Properties></Item></Item>
+<Item class="Script" referent="RBX450F929D681F456397FA7BF255A7CD98"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
           </Item>
       <Item class="Model" referent="RBX8F23B10CDE274E0193C89582EFD3DBAB">
           <Properties>
@@ -59545,6 +61020,65 @@
               <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
             </Properties>
           </Item>
+          <Item class="Part" referent="RBX0306CE9924A84272A3D6F551A3E48DFB"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>108.419985</X><Y>3.17</Y><Z>-14.62</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBX6368E08BB4484704AF8F44C3E406DB57"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBX1809B141649F40B1821EED96F0D1226B"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBX554BE6F3CACB4076908A7B6B4E122E89"><Properties><string name="Name">CenterOffset</string><double name="Value">1.42</double></Properties></Item><Item class="BoolValue" referent="RBX2C6CCC41F0F34DDC95CC3C2342EDDA09"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBXD685796FB17F4B9591FB146F3E523084"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
         </Item>
       <Item class="Model" referent="RBX22DF1964F8A8416181A38ED5B2A18764">
           <Properties>
@@ -63650,6 +65184,65 @@
               <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
             </Properties>
           </Item>
+          <Item class="Part" referent="RBX0CC00BFA62874415A692496BEEFEB78C"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>117.179985</X><Y>3.9</Y><Z>-14.65</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBX7C0CAF13BFE24CA9AC36465707797E9F"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBX42167793A011489398B70A8EC21B4146"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBX95F6E6C22A2E44CD850282AB0F6E4628"><Properties><string name="Name">CenterOffset</string><double name="Value">1.18</double></Properties></Item><Item class="BoolValue" referent="RBX2D4213D4AD6642E680AD40A00965F5A2"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBX2D3B417A00934933A543E279181682F7"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
         </Item>
       <Item class="Model" referent="RBXD93AAEC63F2047BBAAA2F60C15899846">
           <Properties>
@@ -67755,6 +69348,65 @@
               <SharedString name="Tags">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
             </Properties>
           </Item>
+          <Item class="Part" referent="RBX3691253EEB0A46CCAC7F2BF10EC95883"><Properties><string name="Name">DoorControl</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><bool name="CanTouch">false</bool><bool name="CanQuery">false</bool><float name="Transparency">1</float><CoordinateFrame name="CFrame"><X>126.379985</X><Y>3.05</Y><Z>-14.62</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>0.2</X><Y>0.2</Y><Z>0.2</Z></Vector3><token name="shape">1</token></Properties><Item class="ProximityPrompt" referent="RBX6975A4B764614F719E96FD95C53E02E1"><Properties><string name="Name">DoorPrompt</string><string name="ActionText">Открыть</string><string name="ObjectText">Дверь</string><float name="HoldDuration">0</float><float name="MaxActivationDistance">10</float><bool name="RequiresLineOfSight">false</bool><bool name="Enabled">true</bool></Properties></Item><Item class="NumberValue" referent="RBX50D62DFD895746AE900DD33AF3A1AF93"><Properties><string name="Name">TravelDistance</string><double name="Value">3.2</double></Properties></Item><Item class="NumberValue" referent="RBXDFABFBCB84944C98B4B5A2A96264BBB8"><Properties><string name="Name">CenterOffset</string><double name="Value">1.38</double></Properties></Item><Item class="BoolValue" referent="RBX3F789F706FFA4F63B2802829971F3511"><Properties><string name="Name">DoubleDoor</string><bool name="Value">false</bool></Properties></Item></Item>
+<Item class="Script" referent="RBXA57A0533FDAB40E589E32BE2ED2F8449"><Properties><string name="Name">DoorController</string><ProtectedString name="Source">-- Each door contains its own controller so the asset can be copied on its own.
+local TweenService = game:GetService("TweenService")
+
+local door = script.Parent
+local control = door:WaitForChild("DoorControl")
+local prompt = control:WaitForChild("DoorPrompt")
+local travel = control:WaitForChild("TravelDistance").Value
+local isDouble = control:WaitForChild("DoubleDoor").Value
+local centerOffset = control:WaitForChild("CenterOffset").Value
+local axis = control.CFrame.RightVector
+local center = control.Position - axis * centerOffset
+local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local pieces = {}
+for _, instance in ipairs(door:GetDescendants()) do
+	if instance:IsA("BasePart") and instance ~= control then
+		instance.Anchored = true
+		local direction = -1
+		if isDouble and (instance.Position - center):Dot(axis) &gt;= 0 then
+			direction = 1
+		end
+		table.insert(pieces, {part = instance, closed = instance.CFrame, direction = direction})
+	elseif instance:IsA("WeldConstraint") or instance:IsA("JointInstance") then
+		-- Parts are anchored and moved together. A joint between two leaves of
+		-- a double door must not prevent them from moving in opposite directions.
+		instance.Enabled = false
+	end
+end
+control.Anchored = true
+local closedControl = control.CFrame
+local isOpen = false
+local moving = false
+
+prompt.Triggered:Connect(function()
+	if moving then
+		return
+	end
+	moving = true
+	prompt.Enabled = false
+	local shouldOpen = not isOpen
+
+	for _, entry in ipairs(pieces) do
+		local offset = if shouldOpen then axis * travel * entry.direction else Vector3.zero
+		TweenService:Create(entry.part, tweenInfo, {CFrame = entry.closed + offset}):Play()
+	end
+
+	-- The prompt lives on this invisible part and follows the left leaf.
+	local controlOffset = if shouldOpen then -axis * travel else Vector3.zero
+	local controlTween = TweenService:Create(control, tweenInfo, {CFrame = closedControl + controlOffset})
+	controlTween:Play()
+	controlTween.Completed:Wait()
+
+	isOpen = shouldOpen
+	prompt.ActionText = if isOpen then "Закрыть" else "Открыть"
+	prompt.Enabled = true
+	moving = false
+end)
+</ProtectedString><bool name="Disabled">false</bool></Properties></Item>
         </Item>
       </Item></Item>
   <SharedStrings>
